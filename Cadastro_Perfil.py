@@ -52,6 +52,14 @@ def login():
         return jsonify({'message': 'Login realizado com sucesso!'}), 200
     return jsonify({'error': 'Credenciais inválidas'}), 401
 
+@app.route('/logout', methods=['POST'])
+def logout():
+    """Rota para logout do usuário."""
+    if 'user' in session:
+        session.pop('user', None)
+        return jsonify({'message': 'Logout realizado com sucesso!'}), 200
+    return jsonify({'error': 'Nenhum usuário logado'}), 400
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
