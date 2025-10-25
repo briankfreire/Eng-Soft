@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Skills Service – MVP Front</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        background: #f5f6fa;
+        color: #2c3e50;
+      }
+      h1, h2 {
+        color: #27ae60;
+      }
+      section {
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: bold;
+      }
+      input, select, button {
+        padding: 0.5rem;
+        margin-bottom: 0.75rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        background: #27ae60;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      pre {
+        background: #ecf0f1;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+      li {
+        margin-bottom: 0.5rem;
+      }
+      .inline {
+        display: flex;
+        gap: 0.75rem;
+      }
+      .inline input, .inline select {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Skills Service – MVP Front</h1>
+    <p>
+      Visualize e mantenha o catálogo de competências, além de vincular habilidades ao colaborador selecionado.
+      Backend esperado em <code>http://localhost:5003</code>.
+    </p>
+
+    <section>
+      <h2>Identificação do Colaborador</h2>
+      <label for="user-id">User ID</label>
+      <input id="user-id" type="number" min="1" placeholder="1" />
+      <button onclick="loadUserSkills()">Carregar habilidades do usuário</button>
+    </section>
+
+    <section>
+      <h2>Catálogo de Skills</h2>
+      <button onclick="loadSkills()">Atualizar lista</button>
+      <ul id="skills-list"></ul>
+
+      <h3>Sugerir/cadastrar nova skill</h3>
+      <label for="new-skill-name">Nome da skill</label>
+      <input id="new-skill-name" type="text" placeholder="Product Discovery, Rust..." />
+
+      <label for="new-skill-status">Status</label>
+      <select id="new-skill-status">
+        <option value="pending">pending (sugestão)</option>
+        <option value="approved">approved (já disponível)</option>
+      </select>
+
+      <button onclick="createSkill()">Criar skill</button>
+    </section>
+
+    <section>
+      <h2>Vincular Skill ao Usuário</h2>
+      <div class="inline">
+        <select id="existing-skill">
+          <option value="">Selecionar skill existente</option>
+        </select>
+        <input id="custom-skill-name" type="text" placeholder="ou informe um novo nome" />
+      </div>
+
+      <label for="proficiency">Proficiência</label>
+      <select id="proficiency">
+        <option value="basic">Básico</option>
+        <option value="intermediate">Intermediário</option>
+        <option value="advanced">Avançado</option>
+      </select>
+
+      <button onclick="addUserSkill()">Adicionar ao usuário</button>
+
+      <h3>Habilidades do usuário</h3>
+      <ul id="user-skills-list"></ul>
+    </section>
+
+    <section>
+      <h2>Métricas</h2>
+      <button onclick="loadMetrics()">Atualizar métricas</button>
+      <pre id="metrics-output">Ainda não carregado.</pre>
+    </section>
+
+    <script>
+      const API_BASE = "http://localhost:5003";
+      let skillsCache = [];
+
+      function renderSkills(skills) {
+        const list = document.getElementById("skills-list");
+        list.innerHTML = "";
+        const select = document.getElementById("existing-skill");
+        select.innerHTML = '<option value="">Selecionar skill existente</option>';
+        skills.forEach((skill) => {
+          const li = document.createElement("li");
+          li.textContent = `${skill.name} (${skill.status})`;
+          list.appendChild(li);
+          const option = document.createElement("option");
+          option.value = skill.id;
+          option.textContent = skill.name;
+          select.appendChild(option);
+        });
+      }
+
+      async function loadSkills() {
+        try {
+          const response = await fetch(`${API_BASE}/skills`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          skillsCache = data.skills;
+          renderSkills(data.skills);
+        } catch (error) {
+          document.getElementById("metrics-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function createSkill() {
+        const name = document.getElementById("new-skill-name").value.trim();
+        const status = document.getElementById("new-skill-status").value;
+        if (!name) {
+          alert("Informe um nome para a skill.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/skills`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, status }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          document.getElementById("new-skill-name").value = "";
+          await loadSkills();
+        } catch (error) {
+          document.getElementById("metrics-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      function getUserId() {
+        const value = document.getElementById("user-id").value;
+        return value ? parseInt(value, 10) : null;
+      }
+
+      async function loadUserSkills() {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe o user ID.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/users/${userId}/skills`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          const list = document.getElementById("user-skills-list");
+          list.innerHTML = "";
+          data.skills.forEach((record) => {
+            const li = document.createElement("li");
+            li.textContent = `${record.skill_name} (${record.proficiency})`;
+            const remove = document.createElement("button");
+            remove.textContent = "remover";
+            remove.style.marginLeft = "0.5rem";
+            remove.onclick = () => removeUserSkill(record.id);
+            li.appendChild(remove);
+            list.appendChild(li);
+          });
+        } catch (error) {
+          document.getElementById("metrics-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function addUserSkill() {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe o user ID.");
+          return;
+        }
+        const skillId = document.getElementById("existing-skill").value;
+        const skillName = document.getElementById("custom-skill-name").value.trim();
+        const proficiency = document.getElementById("proficiency").value;
+        if (!skillId && !skillName) {
+          alert("Escolha uma skill existente ou informe um novo nome.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/users/${userId}/skills`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              skill_id: skillId ? parseInt(skillId, 10) : undefined,
+              skill_name: skillName || undefined,
+              proficiency,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          document.getElementById("existing-skill").value = "";
+          document.getElementById("custom-skill-name").value = "";
+          await loadUserSkills();
+        } catch (error) {
+          document.getElementById("metrics-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function removeUserSkill(userSkillId) {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe o user ID.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/users/${userId}/skills/${userSkillId}`, {
+            method: "DELETE",
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          await loadUserSkills();
+        } catch (error) {
+          document.getElementById("metrics-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function loadMetrics() {
+        try {
+          const response = await fetch(`${API_BASE}/metrics`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          document.getElementById("metrics-output").textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          document.getElementById("metrics-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      // carregar catálogo inicial ao abrir
+      loadSkills();
+    </script>
+  </body>
+</html>

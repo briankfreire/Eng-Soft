@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Auth Service – MVP Front</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        background: #f5f6fa;
+        color: #2c3e50;
+      }
+      h1, h2 {
+        color: #1a7bb8;
+      }
+      section {
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: bold;
+      }
+      input, button {
+        padding: 0.5rem;
+        margin-bottom: 0.75rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        background: #1a7bb8;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+      }
+      pre {
+        background: #ecf0f1;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      .inline {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .inline input {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Auth Service – MVP Front</h1>
+    <p>
+      Este microfront permite registrar colaboradores, autenticar e acompanhar métricas iniciais.
+      Certifique-se de que o serviço backend (`http://localhost:5001`) está em execução.
+    </p>
+
+    <section>
+      <h2>Cadastro</h2>
+      <label for="register-email">Email</label>
+      <input id="register-email" type="email" placeholder="colaborador@email.com" />
+
+      <label for="register-password">Senha (mínimo 6 caracteres)</label>
+      <input id="register-password" type="password" placeholder="******" />
+
+      <button onclick="handleRegister()">Cadastrar</button>
+    </section>
+
+    <section>
+      <h2>Login</h2>
+      <label for="login-email">Email</label>
+      <input id="login-email" type="email" placeholder="colaborador@email.com" />
+
+      <label for="login-password">Senha</label>
+      <input id="login-password" type="password" placeholder="******" />
+
+      <button onclick="handleLogin()">Entrar</button>
+    </section>
+
+    <section>
+      <h2>Buscar Usuário (por ID)</h2>
+      <div class="inline">
+        <input id="user-id" type="number" min="1" placeholder="ID retornado no cadastro/login" />
+        <button onclick="fetchUser()">Buscar</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Métricas</h2>
+      <button onclick="fetchMetrics()">Atualizar métricas</button>
+    </section>
+
+    <section>
+      <h2>Logs</h2>
+      <pre id="output">Aguardando ações...</pre>
+    </section>
+
+    <script>
+      const API_BASE = "http://localhost:5001";
+
+      function log(message, data) {
+        const output = document.getElementById("output");
+        const content = {
+          timestamp: new Date().toISOString(),
+          message,
+          data,
+        };
+        output.textContent = JSON.stringify(content, null, 2);
+      }
+
+      async function handleRegister() {
+        const email = document.getElementById("register-email").value.trim();
+        const password = document.getElementById("register-password").value.trim();
+        if (!email || !password) {
+          log("Informe email e senha para cadastrar.", null);
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          log("Cadastro realizado com sucesso.", data);
+          document.getElementById("user-id").value = data.user.id;
+        } catch (error) {
+          log("Erro no cadastro.", error);
+        }
+      }
+
+      async function handleLogin() {
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value.trim();
+        if (!email || !password) {
+          log("Informe email e senha para login.", null);
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          log("Login efetuado.", data);
+          document.getElementById("user-id").value = data.user.id;
+        } catch (error) {
+          log("Erro no login.", error);
+        }
+      }
+
+      async function fetchUser() {
+        const userId = document.getElementById("user-id").value;
+        if (!userId) {
+          log("Informe um ID antes de buscar.", null);
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/users/${userId}`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          log("Usuário recuperado.", data);
+        } catch (error) {
+          log("Erro ao buscar usuário.", error);
+        }
+      }
+
+      async function fetchMetrics() {
+        try {
+          const response = await fetch(`${API_BASE}/metrics`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          log("Métricas atualizadas.", data);
+        } catch (error) {
+          log("Erro ao carregar métricas.", error);
+        }
+      }
+    </script>
+  </body>
+</html>
