@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Profile Service – MVP Front</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        background: #f5f6fa;
+        color: #2c3e50;
+      }
+      h1, h2 {
+        color: #9b59b6;
+      }
+      section {
+        background: #ffffff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+      }
+      label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: bold;
+      }
+      input, select, textarea, button {
+        padding: 0.5rem;
+        margin-bottom: 0.75rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      textarea {
+        min-height: 80px;
+      }
+      button {
+        background: #9b59b6;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      pre {
+        background: #ecf0f1;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      .inline {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+      .inline input {
+        flex: 1;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+      li {
+        margin-bottom: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Profile Service – MVP Front</h1>
+    <p>
+      Use este microfront para criar/atualizar perfis, adicionar links externos e verificar a métrica de completude.
+      Backend esperado em <code>http://localhost:5002</code>.
+    </p>
+
+    <section>
+      <h2>Identificação</h2>
+      <label for="user-id">User ID (mesmo do Auth Service)</label>
+      <input id="user-id" type="number" min="1" placeholder="1" />
+      <button onclick="loadProfile()">Carregar perfil</button>
+    </section>
+
+    <section>
+      <h2>Dados Básicos</h2>
+      <label for="full-name">Nome completo</label>
+      <input id="full-name" type="text" placeholder="Nome do Colaborador" />
+
+      <label for="bio">Bio</label>
+      <textarea id="bio" placeholder="Conte um pouco sobre o colaborador"></textarea>
+
+      <label for="avatar-url">URL da imagem</label>
+      <input id="avatar-url" type="url" placeholder="https://..." />
+
+      <label for="availability">Disponibilidade</label>
+      <select id="availability">
+        <option value="exploring">Explorando oportunidades</option>
+        <option value="actively-looking">Buscando ativamente projetos</option>
+      </select>
+
+      <button onclick="saveProfile()">Salvar perfil</button>
+    </section>
+
+    <section>
+      <h2>Links Externos</h2>
+      <div class="inline">
+        <input id="link-label" type="text" placeholder="LinkedIn, GitHub..." />
+        <input id="link-url" type="url" placeholder="https://..." />
+      </div>
+      <button onclick="addLink()">Adicionar link</button>
+      <h3>Links atuais</h3>
+      <ul id="links-list"></ul>
+    </section>
+
+    <section>
+      <h2>Completude</h2>
+      <button onclick="checkCompleteness()">Verificar completude</button>
+      <pre id="completeness-output">Ainda não calculado.</pre>
+    </section>
+
+    <section>
+      <h2>Perfil JSON</h2>
+      <pre id="profile-output">Nenhum perfil carregado ainda.</pre>
+    </section>
+
+    <script>
+      const API_BASE = "http://localhost:5002";
+
+      function getUserId() {
+        const value = document.getElementById("user-id").value;
+        return value ? parseInt(value, 10) : null;
+      }
+
+      function renderProfile(profile) {
+        document.getElementById("profile-output").textContent = JSON.stringify(profile, null, 2);
+        if (!profile) {
+          document.getElementById("links-list").innerHTML = "";
+          return;
+        }
+        document.getElementById("full-name").value = profile.full_name || "";
+        document.getElementById("bio").value = profile.bio || "";
+        document.getElementById("avatar-url").value = profile.avatar_url || "";
+        document.getElementById("availability").value = profile.availability || "exploring";
+        const list = document.getElementById("links-list");
+        list.innerHTML = "";
+        profile.links.forEach((link) => {
+          const li = document.createElement("li");
+          li.textContent = `${link.label} – ${link.url}`;
+          const remove = document.createElement("button");
+          remove.textContent = "remover";
+          remove.style.marginLeft = "0.5rem";
+          remove.onclick = () => removeLink(link.id);
+          li.appendChild(remove);
+          list.appendChild(li);
+        });
+        document.getElementById("completeness-output").textContent = JSON.stringify(profile.completeness, null, 2);
+      }
+
+      async function loadProfile() {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe um user ID válido.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/profiles/${userId}`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          renderProfile(data.profile);
+        } catch (error) {
+          renderProfile(null);
+          document.getElementById("profile-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function saveProfile() {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe o user ID antes de salvar.");
+          return;
+        }
+        const payload = {
+          full_name: document.getElementById("full-name").value.trim(),
+          bio: document.getElementById("bio").value.trim(),
+          avatar_url: document.getElementById("avatar-url").value.trim(),
+          availability: document.getElementById("availability").value,
+        };
+        try {
+          const response = await fetch(`${API_BASE}/profiles/${userId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          renderProfile(data.profile);
+        } catch (error) {
+          document.getElementById("profile-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function addLink() {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe o user ID antes de adicionar links.");
+          return;
+        }
+        const label = document.getElementById("link-label").value.trim();
+        const url = document.getElementById("link-url").value.trim();
+        if (!label || !url) {
+          alert("Informe rótulo e URL.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/profiles/${userId}/links`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ label, url }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          document.getElementById("link-label").value = "";
+          document.getElementById("link-url").value = "";
+          renderProfile(data.profile);
+        } catch (error) {
+          document.getElementById("profile-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function removeLink(linkId) {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe o user ID.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/profiles/${userId}/links/${linkId}`, {
+            method: "DELETE",
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          await loadProfile();
+        } catch (error) {
+          document.getElementById("profile-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+
+      async function checkCompleteness() {
+        const userId = getUserId();
+        if (!userId) {
+          alert("Informe o user ID.");
+          return;
+        }
+        try {
+          const response = await fetch(`${API_BASE}/profiles/${userId}/completeness`);
+          const data = await response.json();
+          if (!response.ok) {
+            throw data;
+          }
+          document.getElementById("completeness-output").textContent = JSON.stringify(data.completeness, null, 2);
+        } catch (error) {
+          document.getElementById("completeness-output").textContent = JSON.stringify(error, null, 2);
+        }
+      }
+    </script>
+  </body>
+</html>
