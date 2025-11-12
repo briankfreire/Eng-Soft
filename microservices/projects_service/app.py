@@ -11,6 +11,11 @@ import sqlite3
 DATABASE_PATH = Path(__file__).with_name("projects.db")
 PROJETOS_API_URL = "https://bdprojetos.azurewebsites.net"
 
+# Base URLs fixas (Azure)
+AUTH_SERVICE_BASE = "https://colaboradores-auth.azurewebsites.net"
+PROFILE_SERVICE_BASE = "https://colaboradores-profile.azurewebsites.net"
+SKILLS_SERVICE_BASE = "https://colaboradores-skills.azurewebsites.net"
+
 
 def _now() -> str:
     return datetime.utcnow().isoformat(timespec="seconds")
@@ -56,8 +61,8 @@ def create_app() -> Flask:
         """Vincula colaborador ao projeto e notifica API externa."""
         try:
             # 1. Buscar dados do colaborador nos outros serviços
-            profile_url = f"http://profile_service:5002/profiles/{user_id}"
-            skills_url = f"http://skills_service:5003/users/{user_id}/skills"
+            profile_url = f"{PROFILE_SERVICE_BASE}/profiles/{user_id}"
+            skills_url = f"{SKILLS_SERVICE_BASE}/users/{user_id}/skills"
             
             try:
                 profile_res = requests.get(profile_url, timeout=5)
@@ -79,7 +84,7 @@ def create_app() -> Flask:
             skill_level = main_skill.get("proficiency", "basic")
 
             # 3. Buscar email do auth_service
-            auth_url = f"http://auth_service:5001/users/{user_id}"
+            auth_url = f"{AUTH_SERVICE_BASE}/users/{user_id}"
             try:
                 auth_res = requests.get(auth_url, timeout=5)
                 if auth_res.status_code != 200:
