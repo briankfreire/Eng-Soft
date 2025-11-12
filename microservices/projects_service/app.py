@@ -116,10 +116,15 @@ def create_app() -> Flask:
                     json=payload,
                     timeout=10
                 )
+                # Trata 200/201 como sucesso; 409 (já vinculado) também deve ser tratado como idempotente/sucesso
                 if external_res.status_code not in (200, 201):
-                    return jsonify(
-                        error=f"Falha ao notificar API de Projetos: {external_res.text}"
-                    ), 500
+                    if external_res.status_code == 409:
+                        # Idempotência: já vinculado na API externa, seguir adiante para garantir persistência local
+                        pass
+                    else:
+                        return jsonify(
+                            error=f"Falha ao notificar API de Projetos: {external_res.text}"
+                        ), 500
             except requests.exceptions.RequestException as e:
                 return jsonify(error=f"Erro ao conectar à API de Projetos: {str(e)}"), 500
 
@@ -127,13 +132,21 @@ def create_app() -> Flask:
             with get_conn() as conn:
                 cursor = conn.execute(
                     """
-                    INSERT INTO project_collaborators (project_id, user_id, skill_name, skill_level, created_at)
+                    INSERT OR IGNORE INTO project_collaborators (project_id, user_id, skill_name, skill_level, created_at)
                     VALUES (?, ?, ?, ?, ?)
                     """,
                     (project_id, user_id, skill_name, skill_level, _now())
                 )
                 conn.commit()
-                link_id = cursor.lastrowid
+                if cursor.rowcount == 0:
+                    # Já existia localmente; recuperar id existente
+                    existing_row = conn.execute(
+                        "SELECT id FROM project_collaborators WHERE project_id = ? AND user_id = ?",
+                        (project_id, user_id)
+                    ).fetchone()
+                    link_id = existing_row["id"] if existing_row else None
+                else:
+                    link_id = cursor.lastrowid
 
             return jsonify(
                 message="Colaborador vinculado com sucesso",
