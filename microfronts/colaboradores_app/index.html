@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Colaboradores - TeamBuilder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <header class="bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-700 border-b border-white/20 px-6 py-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-white">TeamBuilder - Colaboradores</h1>
+      <nav class="flex items-center gap-4">
+        <span id="userEmail" class="text-white text-sm"></span>
+        <button id="logoutBtn" class="text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-colors font-medium hidden">Sair</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-12">
+    
+    <!-- Seção Login/Cadastro -->
+    <section id="authSection" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Entrar / Cadastrar</h2>
+      
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Login -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Login</h3>
+          <form id="loginForm" class="space-y-4">
+            <input type="email" id="loginEmail" placeholder="Email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+            <input type="password" id="loginPassword" placeholder="Senha" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+            <button type="submit" class="w-full bg-violet-700 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Entrar</button>
+          </form>
+        </div>
+        
+        <!-- Cadastro -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Cadastrar</h3>
+          <form id="registerForm" class="space-y-4">
+            <input type="email" id="regEmail" placeholder="Email" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+            <input type="password" id="regPassword" placeholder="Senha (mín. 6 caracteres)" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+            <button type="submit" class="w-full bg-indigo-600 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Cadastrar</button>
+          </form>
+        </div>
+      </div>
+      <div id="authMessage" class="mt-4 text-center text-sm"></div>
+    </section>
+
+    <!-- Seção Perfil -->
+    <section id="profileSection" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 hidden">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Meu Perfil</h2>
+      
+      <form id="profileForm" class="space-y-4">
+        <input type="text" id="fullName" placeholder="Nome Completo" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+        <textarea id="bio" placeholder="Bio / Sobre mim" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"></textarea>
+        <input type="url" id="avatarUrl" placeholder="URL da foto (opcional)" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+        <select id="availability" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700">
+          <option value="exploring">Explorando</option>
+          <option value="actively-looking">Procurando ativamente</option>
+        </select>
+        <button type="submit" class="bg-violet-700 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Salvar Perfil</button>
+      </form>
+      
+      <div class="mt-6 pt-6 border-t">
+        <h3 class="text-lg font-semibold mb-3">Links Externos</h3>
+        <form id="linkForm" class="flex gap-3 mb-4">
+          <input type="text" id="linkLabel" placeholder="Label (ex: LinkedIn)" class="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+          <input type="url" id="linkUrl" placeholder="URL" class="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+          <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:brightness-105 transition font-medium">Adicionar</button>
+        </form>
+        <div id="linksList" class="space-y-2"></div>
+      </div>
+      
+      <div id="profileMessage" class="mt-4 text-center text-sm"></div>
+    </section>
+
+    <!-- Seção Skills -->
+    <section id="skillsSection" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 hidden">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Minhas Competências</h2>
+      
+      <form id="skillForm" class="flex gap-3 mb-6">
+        <input type="text" id="skillName" placeholder="Competência (ex: Python)" required class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+        <select id="skillLevel" class="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700">
+          <option value="basic">Básico</option>
+          <option value="intermediate">Intermediário</option>
+          <option value="advanced">Avançado</option>
+        </select>
+        <button type="submit" class="bg-violet-700 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Adicionar</button>
+      </form>
+      
+      <div id="skillsList" class="space-y-2"></div>
+      <div id="skillsMessage" class="mt-4 text-center text-sm"></div>
+    </section>
+
+    <!-- Seção Buscar Projetos -->
+    <section id="searchProjectsSection" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 hidden">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">🔍 Buscar Projetos Disponíveis</h2>
+      
+      <div class="flex gap-3 mb-6">
+        <input type="text" id="searchProjectInput" placeholder="Buscar por título ou descrição..." class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+        <button id="searchProjectBtn" class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Buscar</button>
+        <button id="listAllProjectsBtn" class="bg-gray-600 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Listar Todos</button>
+      </div>
+      
+      <div id="availableProjectsList" class="space-y-4"></div>
+      <div id="searchProjectsMessage" class="mt-4 text-center text-sm"></div>
+    </section>
+
+    <!-- Seção Meus Projetos -->
+    <section id="projectsSection" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 hidden">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">📁 Meus Projetos</h2>
+      
+      <div id="projectsList" class="space-y-2"></div>
+      <div id="projectsMessage" class="mt-4 text-center text-sm"></div>
+    </section>
+
+  </main>
+
+  <script>
+    // URLs dos microsserviços (trocar localhost por URLs Azure depois)
+    const AUTH_URL = 'http://localhost:5001';
+    const PROFILE_URL = 'http://localhost:5002';
+    const SKILLS_URL = 'http://localhost:5003';
+    const PROJECTS_URL = 'http://localhost:5004';
+
+    let currentUserId = null;
+
+    // ============ AUTH ============
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const res = await fetch(`${AUTH_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          currentUserId = data.user.id;
+          showMessage('authMessage', 'Login realizado!', 'green');
+          showLoggedInSections(data.user.email);
+          loadUserData();
+        } else {
+          showMessage('authMessage', data.error || 'Erro no login', 'red');
+        }
+      } catch (err) {
+        showMessage('authMessage', 'Erro de conexão: ' + err.message, 'red');
+      }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+
+      try {
+        const res = await fetch(`${AUTH_URL}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          showMessage('authMessage', 'Cadastro realizado! Faça login.', 'green');
+          document.getElementById('registerForm').reset();
+        } else {
+          showMessage('authMessage', data.error || 'Erro no cadastro', 'red');
+        }
+      } catch (err) {
+        showMessage('authMessage', 'Erro de conexão: ' + err.message, 'red');
+      }
+    });
+
+    // ============ PROFILE ============
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUserId) return;
+
+      const payload = {
+        full_name: document.getElementById('fullName').value,
+        bio: document.getElementById('bio').value || null,
+        avatar_url: document.getElementById('avatarUrl').value || null,
+        availability: document.getElementById('availability').value
+      };
+
+      try {
+        const res = await fetch(`${PROFILE_URL}/profiles/${currentUserId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          showMessage('profileMessage', 'Perfil atualizado!', 'green');
+        } else {
+          showMessage('profileMessage', data.error || 'Erro ao salvar perfil', 'red');
+        }
+      } catch (err) {
+        showMessage('profileMessage', 'Erro de conexão: ' + err.message, 'red');
+      }
+    });
+
+    document.getElementById('linkForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUserId) return;
+
+      const payload = {
+        label: document.getElementById('linkLabel').value,
+        url: document.getElementById('linkUrl').value
+      };
+
+      try {
+        const res = await fetch(`${PROFILE_URL}/profiles/${currentUserId}/links`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+          document.getElementById('linkForm').reset();
+          loadLinks();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    async function loadLinks() {
+      if (!currentUserId) return;
+      try {
+        const res = await fetch(`${PROFILE_URL}/profiles/${currentUserId}`);
+        const data = await res.json();
+        const links = data.profile?.links || [];
+        
+        const container = document.getElementById('linksList');
+        container.innerHTML = links.map(link => `
+          <div class="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-lg">
+            <span><strong>${link.label}:</strong> <a href="${link.url}" target="_blank" class="text-violet-700 hover:underline">${link.url}</a></span>
+            <button onclick="deleteLink(${link.id})" class="text-red-600 hover:text-red-800 text-sm">Remover</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    window.deleteLink = async (linkId) => {
+      if (!currentUserId) return;
+      try {
+        await fetch(`${PROFILE_URL}/profiles/${currentUserId}/links/${linkId}`, { method: 'DELETE' });
+        loadLinks();
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // ============ SKILLS ============
+    document.getElementById('skillForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUserId) return;
+
+      const payload = {
+        skill_name: document.getElementById('skillName').value,
+        proficiency: document.getElementById('skillLevel').value
+      };
+
+      try {
+        const res = await fetch(`${SKILLS_URL}/users/${currentUserId}/skills`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        if (res.ok) {
+          document.getElementById('skillForm').reset();
+          loadSkills();
+        } else {
+          const data = await res.json();
+          showMessage('skillsMessage', data.error || 'Erro ao adicionar skill', 'red');
+        }
+      } catch (err) {
+        showMessage('skillsMessage', 'Erro de conexão: ' + err.message, 'red');
+      }
+    });
+
+    async function loadSkills() {
+      if (!currentUserId) return;
+      try {
+        const res = await fetch(`${SKILLS_URL}/users/${currentUserId}/skills`);
+        const data = await res.json();
+        const skills = data.skills || [];
+        
+        const container = document.getElementById('skillsList');
+        container.innerHTML = skills.map(skill => `
+          <div class="flex items-center justify-between bg-gray-50 px-4 py-2 rounded-lg">
+            <span><strong>${skill.skill_name}</strong> - ${skill.proficiency}</span>
+            <button onclick="deleteSkill(${skill.id})" class="text-red-600 hover:text-red-800 text-sm">Remover</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    window.deleteSkill = async (skillId) => {
+      if (!currentUserId) return;
+      try {
+        await fetch(`${SKILLS_URL}/users/${currentUserId}/skills/${skillId}`, { method: 'DELETE' });
+        loadSkills();
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // ============ SEARCH PROJECTS ============
+    async function loadAvailableProjects(searchTerm = '') {
+      try {
+        // Usar proxy do projects_service para evitar CORS
+        const url = searchTerm 
+          ? `${PROJECTS_URL}/proxy/projects?q=${encodeURIComponent(searchTerm)}`
+          : `${PROJECTS_URL}/proxy/projects`;
+        
+        const res = await fetch(url);
+        const projects = await res.json();
+        
+        const container = document.getElementById('availableProjectsList');
+        
+        if (!projects || projects.length === 0) {
+          container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum projeto encontrado.</p>';
+          return;
+        }
+        
+        container.innerHTML = projects.map(proj => `
+          <div class="border border-gray-200 rounded-xl p-6 hover:border-violet-300 transition">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-xs font-mono bg-gray-100 px-2 py-1 rounded">ID: ${proj.id}</span>
+                  ${proj.category ? `<span class="text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded">${proj.category}</span>` : ''}
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">${proj.title || 'Sem título'}</h3>
+                <p class="text-gray-600 text-sm mt-2">${proj.description || 'Sem descrição'}</p>
+                ${proj.tags && proj.tags.length > 0 ? `
+                  <div class="flex flex-wrap gap-2 mt-3">
+                    ${proj.tags.map(tag => `<span class="text-xs bg-gray-100 px-2 py-1 rounded">${tag.name} (${tag.skill_level})</span>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            <div class="flex items-center justify-between mt-4 pt-4 border-t">
+              <span class="text-xs text-gray-500">
+                ${proj.members ? `${proj.members.length} colaborador(es)` : '0 colaboradores'}
+              </span>
+              <button onclick="joinProject(${proj.id})" class="bg-violet-700 text-white px-4 py-2 rounded-lg hover:brightness-105 transition font-medium text-sm">
+                Participar
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        showMessage('searchProjectsMessage', 'Erro ao buscar projetos: ' + err.message, 'red');
+      }
+    }
+
+    document.getElementById('searchProjectBtn').addEventListener('click', () => {
+      const searchTerm = document.getElementById('searchProjectInput').value;
+      loadAvailableProjects(searchTerm);
+    });
+
+    document.getElementById('listAllProjectsBtn').addEventListener('click', () => {
+      document.getElementById('searchProjectInput').value = '';
+      loadAvailableProjects();
+    });
+
+    document.getElementById('searchProjectInput').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        const searchTerm = document.getElementById('searchProjectInput').value;
+        loadAvailableProjects(searchTerm);
+      }
+    });
+
+    window.joinProject = async (projectId) => {
+      if (!currentUserId) {
+        showMessage('searchProjectsMessage', 'Faça login primeiro!', 'red');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${PROJECTS_URL}/projects/${projectId}/collaborators/${currentUserId}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+          showMessage('searchProjectsMessage', '✅ Você agora participa deste projeto!', 'green');
+          loadProjects();
+          loadAvailableProjects(); // Atualiza lista
+        } else {
+          showMessage('searchProjectsMessage', data.error || 'Erro ao participar', 'red');
+        }
+      } catch (err) {
+        showMessage('searchProjectsMessage', 'Erro de conexão: ' + err.message, 'red');
+      }
+    };
+
+    // ============ MY PROJECTS ============
+
+    async function loadProjects() {
+      if (!currentUserId) return;
+      try {
+        const res = await fetch(`${PROJECTS_URL}/collaborators/${currentUserId}/projects`);
+        const data = await res.json();
+        const projects = data.projects || [];
+        
+        const container = document.getElementById('projectsList');
+        
+        if (projects.length === 0) {
+          container.innerHTML = '<p class="text-gray-500 text-center py-4">Você ainda não participa de nenhum projeto.</p>';
+          return;
+        }
+        
+        container.innerHTML = projects.map(proj => `
+          <div class="flex items-center justify-between bg-gradient-to-r from-violet-50 to-indigo-50 px-6 py-4 rounded-lg border border-violet-200">
+            <div>
+              <span class="text-sm font-mono text-gray-500">ID: ${proj.project_id}</span>
+              <div class="mt-1">
+                <strong class="text-gray-900">Contribuindo com:</strong> 
+                <span class="text-violet-700 font-medium">${proj.skill_name}</span> 
+                <span class="text-gray-600">(${proj.skill_level})</span>
+              </div>
+              <span class="text-xs text-gray-500">${proj.created_at}</span>
+            </div>
+            <button onclick="unlinkProject(${proj.project_id})" class="text-red-600 hover:text-red-800 text-sm font-medium">Sair do Projeto</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    window.unlinkProject = async (projectId) => {
+      if (!currentUserId) return;
+      if (!confirm('Tem certeza que deseja sair deste projeto?')) return;
+      
+      try {
+        const res = await fetch(`${PROJECTS_URL}/projects/${projectId}/collaborators/${currentUserId}`, { method: 'DELETE' });
+        if (res.ok) {
+          showMessage('projectsMessage', 'Você saiu do projeto.', 'green');
+          loadProjects();
+          loadAvailableProjects(); // Atualiza lista de disponíveis
+        }
+      } catch (err) {
+        showMessage('projectsMessage', 'Erro ao sair do projeto: ' + err.message, 'red');
+      }
+    };
+
+    // ============ HELPERS ============
+    function showLoggedInSections(email) {
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('profileSection').classList.remove('hidden');
+      document.getElementById('skillsSection').classList.remove('hidden');
+      document.getElementById('searchProjectsSection').classList.remove('hidden');
+      document.getElementById('projectsSection').classList.remove('hidden');
+      document.getElementById('userEmail').textContent = email;
+      document.getElementById('logoutBtn').classList.remove('hidden');
+    }
+
+    function loadUserData() {
+      loadLinks();
+      loadSkills();
+      loadProjects();
+      loadAvailableProjects();
+    }
+
+    function showMessage(elementId, message, color) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.style.color = color;
+      setTimeout(() => el.textContent = '', 5000);
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      currentUserId = null;
+      document.getElementById('authSection').classList.remove('hidden');
+      document.getElementById('profileSection').classList.add('hidden');
+      document.getElementById('skillsSection').classList.add('hidden');
+      document.getElementById('searchProjectsSection').classList.add('hidden');
+      document.getElementById('projectsSection').classList.add('hidden');
+      document.getElementById('userEmail').textContent = '';
+      document.getElementById('logoutBtn').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+version: "3.9"
+
+services:
+  auth_service:
+    container_name: auth_service
+    build:
+      context: ../../microservices/auth_service
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+  profile_service:
+    container_name: profile_service
+    build:
+      context: ../../microservices/profile_service
+    ports:
+      - "5002:5002"
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+  skills_service:
+    container_name: skills_service
+    build:
+      context: ../../microservices/skills_service
+    ports:
+      - "5003:5003"
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+  projects_service:
+    container_name: projects_service
+    build:
+      context: ../../microservices/projects_service
+    ports:
+      - "5004:5004"
+    restart: unless-stopped
+    depends_on:
+      - auth_service
+      - profile_service
+      - skills_service
+    networks:
+      - collab_net
+
+  auth_frontend:
+    container_name: auth_frontend
+    image: nginx:1.27-alpine
+    depends_on:
+      - auth_service
+    ports:
+      - "3001:80"
+    volumes:
+      - ../../microfronts/auth_app:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+  profile_frontend:
+    container_name: profile_frontend
+    image: nginx:1.27-alpine
+    depends_on:
+      - profile_service
+    ports:
+      - "3002:80"
+    volumes:
+      - ../../microfronts/profile_app:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+  skills_frontend:
+    container_name: skills_frontend
+    image: nginx:1.27-alpine
+    depends_on:
+      - skills_service
+    ports:
+      - "3003:80"
+    volumes:
+      - ../../microfronts/skills_app:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+  analytics_frontend:
+    container_name: analytics_frontend
+    image: nginx:1.27-alpine
+    depends_on:
+      - projects_service
+    ports:
+      - "3004:80"
+    volumes:
+      - ../../microfronts/analytics_app:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+  colaboradores_frontend:
+    container_name: colaboradores_frontend
+    image: nginx:1.27-alpine
+    depends_on:
+      - auth_service
+      - profile_service
+      - skills_service
+      - projects_service
+    ports:
+      - "3005:80"
+    volumes:
+      - ../../microfronts/colaboradores_app:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - collab_net
+
+networks:
+  collab_net:
+    driver: bridge

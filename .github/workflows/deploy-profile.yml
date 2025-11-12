@@ -1,0 +1,36 @@
+name: Deploy Profile Service
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'microservices/profile_service/**'
+      - '.github/workflows/deploy-profile.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        cd microservices/profile_service
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'colaboradores-profile'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PROFILE }}
+        package: ./microservices/profile_service

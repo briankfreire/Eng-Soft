@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'microservices/**'
+      - 'infra/docker/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'microservices/**'
+      - 'infra/docker/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+      has_changes: ${{ steps.matrix.outputs.has_changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            auth_service:
+              - 'microservices/auth_service/**'
+              - 'infra/docker/**'
+              - '.github/workflows/**'
+            profile_service:
+              - 'microservices/profile_service/**'
+              - 'infra/docker/**'
+              - '.github/workflows/**'
+            skills_service:
+              - 'microservices/skills_service/**'
+              - 'infra/docker/**'
+              - '.github/workflows/**'
+            analytics_service:
+              - 'microservices/analytics_service/**'
+              - 'infra/docker/**'
+              - '.github/workflows/**'
+
+      - name: Build matrix payload
+        id: matrix
+        env:
+          AUTH_CHANGED: ${{ steps.filter.outputs.auth_service }}
+          PROFILE_CHANGED: ${{ steps.filter.outputs.profile_service }}
+          SKILLS_CHANGED: ${{ steps.filter.outputs.skills_service }}
+          ANALYTICS_CHANGED: ${{ steps.filter.outputs.analytics_service }}
+        run: |
+          import json
+          import os
+
+          services = []
+          mapping = [
+              ("auth_service", os.getenv("AUTH_CHANGED")),
+              ("profile_service", os.getenv("PROFILE_CHANGED")),
+              ("skills_service", os.getenv("SKILLS_CHANGED")),
+              ("analytics_service", os.getenv("ANALYTICS_CHANGED")),
+          ]
+
+          for name, changed in mapping:
+              if changed == "true":
+                  services.append({"service": name})
+
+          has_changes = bool(services)
+          if not services:
+              services = [{"service": "noop"}]
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"value={json.dumps(services)}\n")
+              handle.write(f"has_changes={'true' if has_changes else 'false'}\n")
+
+  backends:
+    name: Build & smoke (${{ matrix.service }})
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - name: No microservice changes
+        if: ${{ matrix.service == 'noop' }}
+        run: echo "Nenhum microserviço precisou ser validado."
+
+      - name: Checkout
+        if: ${{ matrix.service != 'noop' }}
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        if: ${{ matrix.service != 'noop' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        if: ${{ matrix.service != 'noop' }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        working-directory: microservices/${{ matrix.service }}
+
+      - name: Static smoke tests
+        if: ${{ matrix.service != 'noop' }}
+        run: python -m compileall app.py
+        working-directory: microservices/${{ matrix.service }}
+
+      - name: Validate dependency graph
+        if: ${{ matrix.service != 'noop' }}
+        run: pip check
+        working-directory: microservices/${{ matrix.service }}
+
+  compose-validate:
+    name: Validate docker compose
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.has_changes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check docker compose syntax
+        run: docker compose -f infra/docker/docker-compose.yml config
