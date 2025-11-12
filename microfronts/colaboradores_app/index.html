@@ -102,9 +102,15 @@
         <input type="text" id="searchProjectInput" placeholder="Buscar por título ou descrição..." class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
         <button id="searchProjectBtn" class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Buscar</button>
         <button id="listAllProjectsBtn" class="bg-gray-600 text-white px-6 py-3 rounded-xl hover:brightness-105 transition font-medium">Listar Todos</button>
+        <button id="toggleProjectsListBtn" class="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl hover:bg-gray-300 transition font-medium">Esconder Lista</button>
       </div>
       
       <div id="availableProjectsList" class="space-y-4"></div>
+      <div id="projectsPagination" class="flex items-center justify-center gap-3 mt-4 hidden">
+        <button id="prevPageBtn" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 disabled:opacity-50">Anterior</button>
+        <span id="pageInfo" class="text-sm text-gray-600"></span>
+        <button id="nextPageBtn" class="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 disabled:opacity-50">Próximo</button>
+      </div>
       <div id="searchProjectsMessage" class="mt-4 text-center text-sm"></div>
     </section>
 
@@ -321,24 +327,27 @@
     };
 
     // ============ SEARCH PROJECTS ============
-    async function loadAvailableProjects(searchTerm = '') {
-      try {
-        // Usar proxy do projects_service para evitar CORS
-        const url = searchTerm 
-          ? `${PROJECTS_URL}/proxy/projects?q=${encodeURIComponent(searchTerm)}`
-          : `${PROJECTS_URL}/proxy/projects`;
-        
-        const res = await fetch(url);
-        const projects = await res.json();
-        
-        const container = document.getElementById('availableProjectsList');
-        
-        if (!projects || projects.length === 0) {
-          container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum projeto encontrado.</p>';
-          return;
-        }
-        
-        container.innerHTML = projects.map(proj => `
+    // ======= PAGINAÇÃO DE PROJETOS DISPONÍVEIS =======
+    let availableProjectsData = [];
+    let currentProjectsPage = 1;
+    const PROJECTS_PAGE_SIZE = 10;
+
+    function renderAvailableProjectsPage(page) {
+      const container = document.getElementById('availableProjectsList');
+      const pagination = document.getElementById('projectsPagination');
+      if (!availableProjectsData || availableProjectsData.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-8">Nenhum projeto encontrado.</p>';
+        pagination.classList.add('hidden');
+        return;
+      }
+      const total = availableProjectsData.length;
+      const totalPages = Math.ceil(total / PROJECTS_PAGE_SIZE) || 1;
+      currentProjectsPage = Math.min(Math.max(1, page), totalPages);
+      const start = (currentProjectsPage - 1) * PROJECTS_PAGE_SIZE;
+      const end = start + PROJECTS_PAGE_SIZE;
+      const pageItems = availableProjectsData.slice(start, end);
+
+      container.innerHTML = pageItems.map(proj => `
           <div class="border border-gray-200 rounded-xl p-6 hover:border-violet-300 transition">
             <div class="flex items-start justify-between mb-3">
               <div class="flex-1">
@@ -365,6 +374,47 @@
             </div>
           </div>
         `).join('');
+
+      // Atualiza paginação
+      pagination.classList.remove('hidden');
+      document.getElementById('pageInfo').textContent = `Página ${currentProjectsPage} de ${totalPages}`;
+      document.getElementById('prevPageBtn').disabled = currentProjectsPage <= 1;
+      document.getElementById('nextPageBtn').disabled = currentProjectsPage >= totalPages;
+    }
+
+    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
+      renderAvailableProjectsPage(currentProjectsPage - 1);
+    });
+
+    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
+      renderAvailableProjectsPage(currentProjectsPage + 1);
+    });
+
+    document.getElementById('toggleProjectsListBtn')?.addEventListener('click', () => {
+      const list = document.getElementById('availableProjectsList');
+      const btn = document.getElementById('toggleProjectsListBtn');
+      if (list.classList.contains('hidden')) {
+        list.classList.remove('hidden');
+        btn.textContent = 'Esconder Lista';
+        document.getElementById('projectsPagination').classList.remove('hidden');
+      } else {
+        list.classList.add('hidden');
+        btn.textContent = 'Mostrar Lista';
+        document.getElementById('projectsPagination').classList.add('hidden');
+      }
+    });
+
+    async function loadAvailableProjects(searchTerm = '') {
+      try {
+        // Usar proxy do projects_service para evitar CORS
+        const url = searchTerm 
+          ? `${PROJECTS_URL}/proxy/projects?q=${encodeURIComponent(searchTerm)}`
+          : `${PROJECTS_URL}/proxy/projects`;
+        
+        const res = await fetch(url);
+        const projects = await res.json();
+        availableProjectsData = Array.isArray(projects) ? projects : [];
+        renderAvailableProjectsPage(1);
       } catch (err) {
         showMessage('searchProjectsMessage', 'Erro ao buscar projetos: ' + err.message, 'red');
       }
@@ -428,23 +478,90 @@
         }
         
         container.innerHTML = projects.map(proj => `
-          <div class="flex items-center justify-between bg-gradient-to-r from-violet-50 to-indigo-50 px-6 py-4 rounded-lg border border-violet-200">
-            <div>
-              <span class="text-sm font-mono text-gray-500">ID: ${proj.project_id}</span>
-              <div class="mt-1">
-                <strong class="text-gray-900">Contribuindo com:</strong> 
-                <span class="text-violet-700 font-medium">${proj.skill_name}</span> 
-                <span class="text-gray-600">(${proj.skill_level})</span>
+          <div class="bg-gradient-to-r from-violet-50 to-indigo-50 px-6 py-4 rounded-lg border border-violet-200">
+            <div class="flex items-center justify-between gap-4">
+              <div>
+                <span class="text-sm font-mono text-gray-500">ID: ${proj.project_id}</span>
+                <div class="mt-1">
+                  <strong class="text-gray-900">Contribuindo com:</strong> 
+                  <span class="text-violet-700 font-medium">${proj.skill_name}</span> 
+                  <span class="text-gray-600">(${proj.skill_level})</span>
+                </div>
+                <span class="text-xs text-gray-500">${proj.created_at}</span>
               </div>
-              <span class="text-xs text-gray-500">${proj.created_at}</span>
+              <div class="flex items-center gap-3">
+                <button onclick="toggleMembers(${proj.project_id})" class="text-violet-700 hover:text-violet-900 text-sm font-medium">Ver membros</button>
+                <button onclick="unlinkProject(${proj.project_id})" class="text-red-600 hover:text-red-800 text-sm font-medium">Sair do Projeto</button>
+              </div>
             </div>
-            <button onclick="unlinkProject(${proj.project_id})" class="text-red-600 hover:text-red-800 text-sm font-medium">Sair do Projeto</button>
+            <div id="members-${proj.project_id}" class="mt-4 hidden bg-white/70 rounded-md p-4 border border-violet-200"></div>
           </div>
         `).join('');
       } catch (err) {
         console.error(err);
       }
     }
+
+    // Carregar membros de um projeto (com skills de cada pessoa)
+    window.toggleMembers = async (projectId) => {
+      const box = document.getElementById(`members-${projectId}`);
+      if (!box) return;
+      if (!box.classList.contains('hidden')) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      box.classList.remove('hidden');
+      box.innerHTML = '<p class="text-sm text-gray-500">Carregando membros...</p>';
+
+      try {
+        const res = await fetch(`${PROJECTS_URL}/projects/${projectId}/collaborators`);
+        const data = await res.json();
+        const members = data.collaborators || [];
+
+        if (members.length === 0) {
+          box.innerHTML = '<p class="text-sm text-gray-500">Nenhum membro neste projeto ainda.</p>';
+          return;
+        }
+
+        // Para cada membro, buscar email e skills
+        const details = await Promise.all(members.map(async (m) => {
+          try {
+            const [userRes, skillsRes] = await Promise.all([
+              fetch(`${AUTH_URL}/users/${m.user_id}`),
+              fetch(`${SKILLS_URL}/users/${m.user_id}/skills`)
+            ]);
+            const userData = userRes.ok ? (await userRes.json()).user : null;
+            const skillsData = skillsRes.ok ? (await skillsRes.json()).skills : [];
+            return {
+              user_id: m.user_id,
+              email: userData?.email || `user_${m.user_id}@example.com`,
+              main_skill: m.skill_name ? `${m.skill_name} (${m.skill_level})` : '—',
+              skills: skillsData
+            };
+          } catch {
+            return { user_id: m.user_id, email: `user_${m.user_id}@example.com`, main_skill: '—', skills: [] };
+          }
+        }));
+
+        box.innerHTML = details.map(d => `
+          <div class="flex items-start justify-between gap-4 border-b last:border-b-0 border-violet-100 py-2">
+            <div>
+              <div class="text-sm font-medium text-gray-800">${d.email}</div>
+              <div class="text-xs text-gray-600">Principal no projeto: ${d.main_skill}</div>
+              ${d.skills && d.skills.length > 0 ? `
+                <div class="mt-1 flex flex-wrap gap-2">
+                  ${d.skills.map(s => `<span class="text-[11px] bg-gray-100 px-2 py-1 rounded">${s.skill_name} (${s.proficiency})</span>`).join('')}
+                </div>
+              ` : '<div class="text-xs text-gray-500 mt-1">Sem skills cadastradas</div>'}
+            </div>
+            <a href="#" class="text-xs text-violet-700 hover:underline" onclick="event.preventDefault();">Ver perfil</a>
+          </div>
+        `).join('');
+      } catch (err) {
+        box.innerHTML = '<p class="text-sm text-red-600">Erro ao carregar membros.</p>';
+      }
+    };
 
     window.unlinkProject = async (projectId) => {
       if (!currentUserId) return;
