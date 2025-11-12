@@ -132,6 +132,8 @@
     const PROJECTS_URL = 'https://colaboradores-projects.azurewebsites.net';
 
     let currentUserId = null;
+    // Cache de títulos para manter consistência entre listas
+    const projectTitleCache = {};
 
     // ============ AUTH ============
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -440,6 +442,12 @@
         const res = await fetch(url);
         const projects = await res.json();
         availableProjectsData = Array.isArray(projects) ? projects : [];
+        // Alimenta o cache de títulos com a lista do proxy
+        for (const p of availableProjectsData) {
+          if (p && typeof p.id !== 'undefined') {
+            projectTitleCache[p.id] = p.title || 'Sem título';
+          }
+        }
         renderAvailableProjectsPage(1);
       } catch (err) {
         showMessage('searchProjectsMessage', 'Erro ao buscar projetos: ' + err.message, 'red');
@@ -477,8 +485,8 @@
         
         if (res.ok) {
           showMessage('searchProjectsMessage', '✅ Você agora participa deste projeto!', 'green');
-          loadProjects();
-          loadAvailableProjects(); // Atualiza lista
+          await loadAvailableProjects(); // Atualiza lista e cache de títulos
+          await loadProjects(); // Re-renderiza com títulos corretos
         } else {
           showMessage('searchProjectsMessage', data.error || 'Erro ao participar', 'red');
         }
@@ -503,12 +511,14 @@
           return;
         }
         
-        container.innerHTML = projects.map(proj => `
+        container.innerHTML = projects.map(proj => {
+          const title = projectTitleCache[proj.project_id] || proj.project_title || 'Sem título';
+          return `
           <div class="bg-gradient-to-r from-violet-50 to-indigo-50 px-6 py-4 rounded-lg border border-violet-200">
             <div class="flex items-center justify-between gap-4">
               <div>
                 <div class="flex items-center gap-2">
-                  <span class="text-base font-semibold text-gray-900">${proj.project_title || 'Projeto'}</span>
+                  <span class="text-base font-semibold text-gray-900">${title}</span>
                   <span class="text-xs font-mono text-gray-500">(ID: ${proj.project_id})</span>
                 </div>
                 <div class="mt-1">
@@ -525,7 +535,7 @@
             </div>
             <div id="members-${proj.project_id}" class="mt-4 hidden bg-white/70 rounded-md p-4 border border-violet-200"></div>
           </div>
-        `).join('');
+        `}).join('');
       } catch (err) {
         console.error(err);
       }
@@ -600,8 +610,8 @@
         const res = await fetch(`${PROJECTS_URL}/projects/${projectId}/collaborators/${currentUserId}`, { method: 'DELETE' });
         if (res.ok) {
           showMessage('projectsMessage', 'Você saiu do projeto.', 'green');
-          loadProjects();
-          loadAvailableProjects(); // Atualiza lista de disponíveis
+          await loadAvailableProjects(); // Atualiza lista e cache de títulos
+          await loadProjects();
         }
       } catch (err) {
         showMessage('projectsMessage', 'Erro ao sair do projeto: ' + err.message, 'red');
@@ -619,12 +629,16 @@
       document.getElementById('logoutBtn').classList.remove('hidden');
     }
 
-    function loadUserData() {
-      loadProfile();
-      loadLinks();
-      loadSkills();
-      loadProjects();
-      loadAvailableProjects();
+    async function loadUserData() {
+      // Popular cache de títulos primeiro
+      await loadAvailableProjects();
+      // Carregar demais dados em paralelo e então renderizar 'Meus Projetos' já com títulos
+      await Promise.all([
+        loadProfile(),
+        loadLinks(),
+        loadSkills(),
+        loadProjects()
+      ]);
     }
 
     function showMessage(elementId, message, color) {
