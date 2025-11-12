@@ -21,11 +21,18 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install dependencies
+    - name: Create and activate virtual environment
       run: |
         cd microservices/projects_service
+        python -m venv antenv
+        source antenv/bin/activate
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+      
+    - name: Zip artifact for deployment
+      run: |
+        cd microservices/projects_service
+        zip -r release.zip . -x antenv/\*
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
@@ -33,4 +40,4 @@ jobs:
         app-name: 'colaboradores-projects'
         slot-name: 'production'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PROJECTS }}
-        package: ./microservices/projects_service
+        package: ./microservices/projects_service/release.zip
