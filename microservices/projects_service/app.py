@@ -188,10 +188,26 @@ def create_app() -> Flask:
                 (user_id,)
             ).fetchall()
 
+        # Obter títulos dos projetos da API externa (melhor UX)
+        unique_ids = sorted({row["project_id"] for row in rows})
+        title_map: Dict[int, str] = {}
+        for pid in unique_ids:
+            try:
+                resp = requests.get(f"{PROJETOS_API_URL}/projects/{pid}", timeout=6)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    # Tenta campos comuns: 'title' ou 'name'
+                    title_map[pid] = data.get("title") or data.get("name") or f"Projeto {pid}"
+                else:
+                    title_map[pid] = f"Projeto {pid}"
+            except requests.exceptions.RequestException:
+                title_map[pid] = f"Projeto {pid}"
+
         projects = [
             {
                 "id": row["id"],
                 "project_id": row["project_id"],
+                "project_title": title_map.get(row["project_id"]) or f"Projeto {row['project_id']}",
                 "skill_name": row["skill_name"],
                 "skill_level": row["skill_level"],
                 "created_at": row["created_at"]

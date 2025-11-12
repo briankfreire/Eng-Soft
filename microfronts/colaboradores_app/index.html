@@ -206,6 +206,14 @@
         
         if (res.ok) {
           showMessage('profileMessage', 'Perfil atualizado!', 'green');
+          // Recarrega os campos com o que foi salvo (garante consistência)
+          const p = data.profile;
+          if (p) {
+            document.getElementById('fullName').value = p.full_name || '';
+            document.getElementById('bio').value = p.bio || '';
+            document.getElementById('avatarUrl').value = p.avatar_url || '';
+            document.getElementById('availability').value = (p.availability || 'exploring');
+          }
         } else {
           showMessage('profileMessage', data.error || 'Erro ao salvar perfil', 'red');
         }
@@ -213,6 +221,24 @@
         showMessage('profileMessage', 'Erro de conexão: ' + err.message, 'red');
       }
     });
+    // Carrega e preenche o formulário do perfil com dados salvos
+    async function loadProfile() {
+      if (!currentUserId) return;
+      try {
+        const res = await fetch(`${PROFILE_URL}/profiles/${currentUserId}`);
+        if (!res.ok) return; // se 404, não faz nada (perfil ainda não criado)
+        const data = await res.json();
+        const p = data.profile;
+        if (!p) return;
+        document.getElementById('fullName').value = p.full_name || '';
+        document.getElementById('bio').value = p.bio || '';
+        document.getElementById('avatarUrl').value = p.avatar_url || '';
+        document.getElementById('availability').value = (p.availability || 'exploring');
+      } catch (err) {
+        console.error('Erro ao carregar perfil:', err);
+      }
+    }
+
 
     document.getElementById('linkForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -481,7 +507,10 @@
           <div class="bg-gradient-to-r from-violet-50 to-indigo-50 px-6 py-4 rounded-lg border border-violet-200">
             <div class="flex items-center justify-between gap-4">
               <div>
-                <span class="text-sm font-mono text-gray-500">ID: ${proj.project_id}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-base font-semibold text-gray-900">${proj.project_title || 'Projeto'}</span>
+                  <span class="text-xs font-mono text-gray-500">(ID: ${proj.project_id})</span>
+                </div>
                 <div class="mt-1">
                   <strong class="text-gray-900">Contribuindo com:</strong> 
                   <span class="text-violet-700 font-medium">${proj.skill_name}</span> 
@@ -591,6 +620,7 @@
     }
 
     function loadUserData() {
+      loadProfile();
       loadLinks();
       loadSkills();
       loadProjects();
