@@ -282,6 +282,12 @@ def create_app() -> Flask:
                 timeout=20,
             )
             if not groq_res.ok:
+                # Log detalhado no servidor para debug, mas resposta genérica para o cliente
+                try:
+                    print("[GROQ_ERROR_STATUS]", groq_res.status_code)
+                    print("[GROQ_ERROR_BODY]", groq_res.text[:500])
+                except Exception:
+                    pass
                 return jsonify(error="Falha ao gerar bio"), 502
             data = groq_res.json()
             content = (
