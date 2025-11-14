@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apresentação - Plataforma de Colaboradores</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000;
+      color: #fff;
+      overflow: hidden;
+    }
+    .slide {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      padding: 60px;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .slide.active {
+      display: flex;
+    }
+    .slide h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .slide h2 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 50px;
+      text-align: center;
+      border-bottom: 3px solid #fff;
+      padding-bottom: 20px;
+      display: inline-block;
+    }
+    .box {
+      background: #fff;
+      color: #000;
+      padding: 30px 40px;
+      margin: 15px 0;
+      border: 3px solid #000;
+      max-width: 900px;
+      width: 100%;
+    }
+    .box h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    .box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .box li {
+      margin: 10px 0;
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .box li:before {
+      content: "▪";
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+    .nav {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      display: flex;
+      gap: 15px;
+      z-index: 1000;
+    }
+    .nav button {
+      background: #fff;
+      color: #000;
+      border: 3px solid #fff;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav button:hover {
+      background: #000;
+      color: #fff;
+    }
+    .nav button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .slide-counter {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1100px;
+      width: 100%;
+    }
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .slide h1 {
+        font-size: 2rem;
+      }
+      .slide h2 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 1: Título -->
+  <div class="slide active">
+    <h1>Plataforma de Inovação Colaborativa</h1>
+    <div class="box">
+      <h3>Microsserviço de Colaboradores</h3>
+      <ul>
+        <li>Engenharia de Software - Mackenzie</li>
+        <li>Arquitetura de microsserviços + IA</li>
+        <li>4 serviços Flask + Frontend integrado</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 2: Visão Geral -->
+  <div class="slide">
+    <h2>Visão Geral</h2>
+    <div class="box">
+      <h3>Objetivo da Plataforma</h3>
+      <ul>
+        <li>Conectar idealizadores e colaboradores em projetos de inovação</li>
+        <li>Facilitar formação de equipes multidisciplinares</li>
+        <li>Usar IA para enriquecer perfis e melhorar matchmaking</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Nosso Papel</h3>
+      <ul>
+        <li>Lado "Colaboradores" da plataforma</li>
+        <li>Autenticação, perfil, competências e projetos</li>
+        <li>IA para enriquecimento de perfil (bio automática)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 3: Funcionalidades -->
+  <div class="slide">
+    <h2>Funcionalidades Principais</h2>
+    <div class="box">
+      <ul>
+        <li><strong>Cadastro e Login:</strong> autenticação de colaboradores</li>
+        <li><strong>Perfil Completo:</strong> nome, bio, foto, disponibilidade, links</li>
+        <li><strong>Competências (Skills):</strong> cadastro com níveis de proficiência</li>
+        <li><strong>Descoberta de Projetos:</strong> buscar projetos da turma</li>
+        <li><strong>Meus Projetos:</strong> vincular-se e ver projetos participantes</li>
+        <li><strong>IA - Gerar Bio:</strong> bio profissional baseada em skills</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 4: IA -->
+  <div class="slide">
+    <h2>IA - Enriquecimento de Perfil</h2>
+    <div class="box">
+      <h3>Tipo de IA Escolhido</h3>
+      <ul>
+        <li>Enriquecimento de Perfil (conforme enunciado)</li>
+        <li>IA ajuda a escrever bio de maior impacto</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Como Funciona</h3>
+      <ul>
+        <li>Backend busca skills cadastradas do usuário</li>
+        <li>Monta prompt em português com as competências</li>
+        <li>Chama API Groq (llama-3.3-70b-versatile)</li>
+        <li>Retorna bio curta que o usuário pode ajustar</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 5: Auth Service -->
+  <div class="slide">
+    <h2>Microsserviço Auth</h2>
+    <div class="box">
+      <h3>Responsabilidade</h3>
+      <ul>
+        <li>Autenticação e diretório de usuários</li>
+        <li>Dados: email, senha (hash), timestamps</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Principais Endpoints</h3>
+      <ul>
+        <li><code>POST /register</code> - criar usuário</li>
+        <li><code>POST /login</code> - autenticar e retornar user.id</li>
+        <li><code>GET /users?email=</code> - buscar por email</li>
+        <li><code>GET /users/list</code> - listar todos</li>
+        <li><code>GET /metrics</code> - estatísticas</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 6: Profile Service -->
+  <div class="slide">
+    <h2>Microsserviço Profile</h2>
+    <div class="box">
+      <h3>Responsabilidade</h3>
+      <ul>
+        <li>Perfil completo do colaborador</li>
+        <li>Links externos e indicador de completude</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Principais Endpoints</h3>
+      <ul>
+        <li><code>PUT /profiles/{user_id}</code> - criar/atualizar</li>
+        <li><code>GET /profiles/{user_id}</code> - obter perfil + links</li>
+        <li><code>POST /profiles/{user_id}/links</code> - adicionar link</li>
+        <li><code>POST /profiles/{user_id}/bio/suggest</code> - IA gerar bio</li>
+        <li><code>GET /metrics</code> - estatísticas de perfis</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 7: Skills Service -->
+  <div class="slide">
+    <h2>Microsserviço Skills</h2>
+    <div class="box">
+      <h3>Responsabilidade</h3>
+      <ul>
+        <li>Catálogo de competências por usuário</li>
+        <li>Dados: skill_name, proficiency (basic/intermediate/advanced)</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Principais Endpoints</h3>
+      <ul>
+        <li><code>POST /users/{user_id}/skills</code> - adicionar skill</li>
+        <li><code>GET /users/{user_id}/skills</code> - listar skills</li>
+        <li><code>DELETE /users/{user_id}/skills/{id}</code> - remover</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Integração com IA</h3>
+      <ul>
+        <li>Profile Service consulta este serviço para montar prompt da IA</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 8: Projects Service -->
+  <div class="slide">
+    <h2>Microsserviço Projects</h2>
+    <div class="box">
+      <h3>Responsabilidade</h3>
+      <ul>
+        <li>Ligação colaborador ↔ projeto</li>
+        <li>Integração com banco de projetos da turma</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Endpoints - Projetos</h3>
+      <ul>
+        <li><code>GET /proxy/projects</code> - lista projetos (com busca)</li>
+        <li><code>POST /projects/{id}/collaborators/{user_id}</code> - vincular</li>
+        <li><code>GET /projects/{id}/collaborators</code> - membros</li>
+        <li><code>GET /collaborators/{user_id}/projects</code> - projetos do user</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 9: Projects - Agregação -->
+  <div class="slide">
+    <h2>Projects - Agregação para Outros Grupos</h2>
+    <div class="box">
+      <h3>Endpoints de Colaboradores</h3>
+      <ul>
+        <li><code>GET /collaborators/search?email=|user_id=</code></li>
+        <li>Retorna: user + profile + skills (pacote completo)</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Listagem Paginada</h3>
+      <ul>
+        <li><code>GET /collaborators?page=&page_size=</code></li>
+        <li>Lista colaboradores com dados resumidos</li>
+        <li>Permite outros grupos fazerem matchmaking</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 10: Frontend -->
+  <div class="slide">
+    <h2>Frontend de Colaboradores</h2>
+    <div class="box">
+      <h3>Tecnologia</h3>
+      <ul>
+        <li>HTML + Tailwind CSS (estático)</li>
+        <li>Consome os 4 microsserviços em Azure</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Fluxo Principal</h3>
+      <ul>
+        <li>Login → carregar perfil e skills</li>
+        <li>Preencher/ajustar perfil, adicionar links</li>
+        <li>Clicar "Gerar Bio com IA" para sugestão personalizada</li>
+        <li>Buscar projetos, vincular-se, ver "Meus Projetos"</li>
+        <li>Botão de atalho para app Idealizador</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 11: Integrações -->
+  <div class="slide">
+    <h2>Integrações com Outros Grupos</h2>
+    <div class="box">
+      <h3>Consumimos</h3>
+      <ul>
+        <li><strong>Banco de Projetos da turma:</strong> bdprojetos.azurewebsites.net</li>
+        <li><strong>API Groq:</strong> llama-3.3-70b-versatile para IA</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Oferecemos</h3>
+      <ul>
+        <li>Endpoints de colaboradores (search/list) no Projects Service</li>
+        <li>Outros grupos podem buscar e listar colaboradores</li>
+        <li>Integração bidirecional: nossa API é parte da plataforma única</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Slide 12: Arquitetura -->
+  <div class="slide">
+    <h2>Arquitetura da Solução</h2>
+    <div class="grid">
+      <div class="box">
+        <h3>Backend</h3>
+        <ul>
+          <li>4 microsserviços Flask independentes</li>
+          <li>SQLite em cada serviço</li>
+          <li>CORS habilitado</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Deploy</h3>
+        <ul>
+          <li>Azure Web Apps (Python 3.12)</li>
+          <li>GitHub Actions CI/CD</li>
+          <li>Gunicorn + porta 8000</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Frontend</h3>
+        <ul>
+          <li>HTML estático + Tailwind</li>
+          <li>GitHub Pages</li>
+          <li>Consume APIs diretamente</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Local</h3>
+        <ul>
+          <li>Docker Compose</li>
+          <li>Nginx para microfrontends</li>
+          <li>4 containers + frontend</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 13: Conclusão -->
+  <div class="slide">
+    <h2>Resumo</h2>
+    <div class="box">
+      <h3>Entregamos</h3>
+      <ul>
+        <li>✓ Microsserviços robustos e independentes</li>
+        <li>✓ IA funcional para enriquecimento de perfil</li>
+        <li>✓ Integração com banco de projetos da turma</li>
+        <li>✓ APIs abertas para outros grupos consumirem</li>
+        <li>✓ Frontend completo e funcional em Azure</li>
+        <li>✓ CI/CD automatizado com GitHub Actions</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Conceitos Aplicados</h3>
+      <ul>
+        <li>Arquitetura de microsserviços</li>
+        <li>APIs REST e integração entre serviços</li>
+        <li>Deploy em nuvem (Azure)</li>
+        <li>IA aplicada ao produto</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav">
+    <button id="prevBtn">← Anterior</button>
+    <button id="nextBtn">Próximo →</button>
+  </div>
+  <div class="slide-counter">
+    <span id="current">1</span> / <span id="total">13</span>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const currentSpan = document.getElementById('current');
+    const totalSpan = document.getElementById('total');
+
+    totalSpan.textContent = slides.length;
+
+    function showSlide(n) {
+      slides[currentSlide].classList.remove('active');
+      currentSlide = (n + slides.length) % slides.length;
+      slides[currentSlide].classList.add('active');
+      currentSpan.textContent = currentSlide + 1;
+
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === slides.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+    nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') showSlide(currentSlide - 1);
+      if (e.key === 'ArrowRight') showSlide(currentSlide + 1);
+    });
+
+    showSlide(0);
+  </script>
+
+</body>
+</html>
