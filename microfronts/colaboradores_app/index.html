@@ -62,7 +62,18 @@
           <textarea id="bio" placeholder="Bio / Sobre mim" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"></textarea>
           <div id="bioAiMessage" class="text-xs text-gray-500 mt-1"></div>
         </div>
-        <input type="url" id="avatarUrl" placeholder="URL da foto (opcional)" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+        <div>
+          <label for="avatarUrl" class="block text-sm font-medium text-gray-700 mb-2">Foto de Perfil</label>
+          <div class="flex gap-4 items-start">
+            <div class="flex-1">
+              <input type="url" id="avatarUrl" placeholder="Cole aqui a URL da sua foto (ex: https://i.imgur.com/exemplo.jpg)" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
+              <p class="text-xs text-gray-500 mt-1">💡 Hospede sua foto no <a href="https://imgur.com/upload" target="_blank" class="text-violet-700 hover:underline">Imgur</a> ou <a href="https://imgbb.com/" target="_blank" class="text-violet-700 hover:underline">ImgBB</a>, copie o link direto e cole aqui</p>
+            </div>
+            <div id="avatarPreview" class="hidden w-24 h-24 rounded-xl border-2 border-gray-300 overflow-hidden bg-gray-100 flex items-center justify-center">
+              <img id="avatarPreviewImg" src="" alt="Preview" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </div>
         <select id="availability" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700">
           <option value="exploring">Explorando</option>
           <option value="actively-looking">Procurando ativamente</option>
@@ -290,10 +301,33 @@
         document.getElementById('bio').value = p.bio || '';
         document.getElementById('avatarUrl').value = p.avatar_url || '';
         document.getElementById('availability').value = (p.availability || 'exploring');
+        // Atualiza o preview se houver avatar
+        updateAvatarPreview(p.avatar_url);
       } catch (err) {
         console.error('Erro ao carregar perfil:', err);
       }
     }
+
+    // Preview de avatar em tempo real
+    function updateAvatarPreview(url) {
+      const preview = document.getElementById('avatarPreview');
+      const img = document.getElementById('avatarPreviewImg');
+      if (url && url.trim()) {
+        img.src = url;
+        img.onerror = () => {
+          preview.classList.add('hidden');
+        };
+        img.onload = () => {
+          preview.classList.remove('hidden');
+        };
+      } else {
+        preview.classList.add('hidden');
+      }
+    }
+
+    document.getElementById('avatarUrl').addEventListener('input', (e) => {
+      updateAvatarPreview(e.target.value);
+    });
 
 
     document.getElementById('linkForm').addEventListener('submit', async (e) => {
