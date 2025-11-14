@@ -39,20 +39,3 @@ jobs:
         slot-name: 'production'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PROFILE }}
         package: ./microservices/profile_service/release.zip
-
-    - name: Azure Login (publish profile)
-      uses: azure/login@v2
-      with:
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PROFILE }}
-
-    - name: Set GROQ_API app setting
-      uses: azure/cli@v2
-      with:
-        inlineScript: |
-          APP_NAME="colaboradores-profile"
-          RG_NAME=$(az resource list --name "$APP_NAME" --resource-type Microsoft.Web/sites --query "[0].resourceGroup" -o tsv)
-          if [ -z "$RG_NAME" ]; then
-            echo "Resource group not found for $APP_NAME" >&2
-            exit 1
-          fi
-          az webapp config appsettings set -g "$RG_NAME" -n "$APP_NAME" --settings GROQ_API='${{ secrets.GROQ_API }}'
