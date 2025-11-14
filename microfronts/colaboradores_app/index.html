@@ -211,7 +211,13 @@
         const res = await fetch(`${PROFILE_URL}/profiles/${currentUserId}/bio/suggest`, {
           method: 'POST'
         });
-        const data = await res.json();
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt.slice(0,200)}`);
+        }
         if (res.ok && data.bio_suggestion) {
           document.getElementById('bio').value = data.bio_suggestion;
           msg.style.color = 'green';
@@ -222,7 +228,7 @@
         }
       } catch (err) {
         msg.style.color = 'red';
-        msg.textContent = 'Erro de conexão.';
+        msg.textContent = err.message || 'Erro de conexão.';
       } finally {
         btn.disabled = false;
         btn.textContent = 'Gerar Bio com IA';
@@ -247,8 +253,13 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        const data = await res.json();
-        
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt.slice(0,200)}`);
+        }
         if (res.ok) {
           showMessage('profileMessage', 'Perfil atualizado!', 'green');
           // Recarrega os campos com o que foi salvo (garante consistência)
@@ -263,7 +274,7 @@
           showMessage('profileMessage', data.error || 'Erro ao salvar perfil', 'red');
         }
       } catch (err) {
-        showMessage('profileMessage', 'Erro de conexão: ' + err.message, 'red');
+        showMessage('profileMessage', 'Erro ao salvar perfil: ' + err.message, 'red');
       }
     });
     // Carrega e preenche o formulário do perfil com dados salvos
