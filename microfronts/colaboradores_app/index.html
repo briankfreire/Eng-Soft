@@ -54,7 +54,14 @@
       
       <form id="profileForm" class="space-y-4">
         <input type="text" id="fullName" placeholder="Nome Completo" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
-        <textarea id="bio" placeholder="Bio / Sobre mim" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"></textarea>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label for="bio" class="text-sm font-medium text-gray-700">Bio / Sobre mim</label>
+            <button type="button" id="generateBioBtn" class="text-sm bg-violet-600 text-white px-3 py-1.5 rounded-lg hover:brightness-105">Gerar Bio com IA</button>
+          </div>
+          <textarea id="bio" placeholder="Bio / Sobre mim" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"></textarea>
+          <div id="bioAiMessage" class="text-xs text-gray-500 mt-1"></div>
+        </div>
         <input type="url" id="avatarUrl" placeholder="URL da foto (opcional)" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
         <select id="availability" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700">
           <option value="exploring">Explorando</option>
@@ -96,7 +103,10 @@
 
     <!-- Seção Buscar Projetos -->
     <section id="searchProjectsSection" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8 hidden">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">🔍 Buscar Projetos Disponíveis</h2>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">🔍 Buscar Projetos Disponíveis</h2>
+        <a href="https://brave-field-097f4060f.3.azurestaticapps.net/home/home.html" target="_blank" rel="noopener" class="text-sm bg-emerald-600 text-white px-4 py-2 rounded-xl hover:brightness-105">Criar projeto no Idealizador</a>
+      </div>
       
       <div class="flex gap-3 mb-6">
         <input type="text" id="searchProjectInput" placeholder="Buscar por título ou descrição..." class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-700"/>
@@ -183,6 +193,39 @@
         }
       } catch (err) {
         showMessage('authMessage', 'Erro de conexão: ' + err.message, 'red');
+      }
+    });
+
+    // IA - Gerar Bio a partir das skills do usuário
+    document.getElementById('generateBioBtn').addEventListener('click', async () => {
+      if (!currentUserId) {
+        showMessage('bioAiMessage', 'Faça login primeiro.', 'red');
+        return;
+      }
+      const btn = document.getElementById('generateBioBtn');
+      const msg = document.getElementById('bioAiMessage');
+      btn.disabled = true;
+      btn.textContent = 'Gerando…';
+      msg.textContent = '';
+      try {
+        const res = await fetch(`${PROFILE_URL}/profiles/${currentUserId}/bio/suggest`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (res.ok && data.bio_suggestion) {
+          document.getElementById('bio').value = data.bio_suggestion;
+          msg.style.color = 'green';
+          msg.textContent = 'Bio sugerida criada com IA.';
+        } else {
+          msg.style.color = 'red';
+          msg.textContent = data.error || 'Não foi possível gerar bio agora.';
+        }
+      } catch (err) {
+        msg.style.color = 'red';
+        msg.textContent = 'Erro de conexão.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gerar Bio com IA';
       }
     });
 

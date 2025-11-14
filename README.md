@@ -71,8 +71,11 @@ Projects (5004)
 POST   /projects/{project_id}/collaborators/{user_id}
 GET    /projects/{project_id}/collaborators
 GET    /collaborators/{user_id}/projects
+GET    /collaborators                         # lista colaboradores (com paginação)
 DELETE /projects/{project_id}/collaborators/{user_id}
 GET    /metrics
+GET    /proxy/projects                     # lista projetos externos (bdprojetos)
+GET    /collaborators/search?email=...     # busca colaborador (contrato p/ Idealizador)
 ```
 
 Notas do Projects:
@@ -124,6 +127,53 @@ pytest -q
 `projects_service` usa `bdprojetos.azurewebsites.net`:
 - POST `/projects/{id}/members` com `{collaborator_email, contributed_skill_name, contributed_skill_level}`.
 - GET `/projects` (via proxy) e GET `/projects/{id}` para título.
+
+Contrato p/ Idealizador (listar/buscar colaborador):
+- Listar todos:
+  - `GET {ProjectsURL}/collaborators?page=1&page_size=50`
+  - Resposta:
+```
+{
+  "page": 1,
+  "page_size": 50,
+  "total": 123,
+  "collaborators": [
+    {
+      "user_id": 1,
+      "email": "aluno@example.com",
+      "full_name": "Aluno Nome",
+      "availability": "actively-looking|exploring|null",
+      "skills": [ {"id": 10, "skill_name": "Python", "proficiency": "advanced"} ]
+    }
+  ]
+}
+```
+
+- Buscar um:
+  - Endpoint: `GET {ProjectsURL}/collaborators/search`
+  - Query: `email` (recomendado) ou `user_id`
+  - Resposta:
+```
+{
+  "collaborator": {
+    "user_id": 1,
+    "email": "aluno@example.com",
+    "profile": {
+      "user_id": 1,
+      "full_name": "Aluno Nome",
+      "bio": "...",
+      "avatar_url": "...",
+      "availability": "actively-looking|exploring",
+      "links": [ {"id": 1, "label": "LinkedIn", "url": "..."} ],
+      "completeness": {"percentage": 0-100}
+    },
+    "skills": [ {"id": 1, "skill_name": "Python", "proficiency": "advanced"} ]
+  }
+}
+```
+Notas:
+- Use `email` para busca direta; `user_id` é alternativa.
+- Campos ausentes podem vir `null`/`[]` quando não cadastrados.
 
 ## 🧰 Troubleshooting rápido
 

@@ -286,6 +286,132 @@ def create_app() -> Flask:
         except requests.exceptions.RequestException as e:
             return jsonify(error=f"Erro de conexão: {str(e)}"), 500
 
+    @app.get("/collaborators/search")
+    def search_collaborator():
+        """Agregador simples para o Idealizador buscar colaborador por email ou user_id.
+
+        Ex.: GET /collaborators/search?email=foo@bar.com
+             GET /collaborators/search?user_id=1
+        """
+        email = (request.args.get("email") or "").strip().lower()
+        user_id_param = request.args.get("user_id")
+
+        user: Dict | None = None
+        if email:
+            try:
+                resp = requests.get(f"{AUTH_SERVICE_BASE}/users", params={"email": email}, timeout=6)
+                if resp.status_code == 200:
+                    user = resp.json().get("user")
+                else:
+                    return jsonify(error="usuário não encontrado"), 404
+            except requests.exceptions.RequestException as e:
+                return jsonify(error=f"falha ao consultar auth: {str(e)}"), 502
+        elif user_id_param:
+            try:
+                resp = requests.get(f"{AUTH_SERVICE_BASE}/users/{user_id_param}", timeout=6)
+                if resp.status_code == 200:
+                    user = resp.json().get("user")
+                else:
+                    return jsonify(error="usuário não encontrado"), 404
+            except requests.exceptions.RequestException as e:
+                return jsonify(error=f"falha ao consultar auth: {str(e)}"), 502
+        else:
+            return jsonify(error="informe 'email' ou 'user_id'"), 400
+
+        uid = user.get("id") if user else None
+        if not uid:
+            return jsonify(error="usuário inválido"), 404
+
+        # Obter perfil e skills
+        try:
+            prof_res = requests.get(f"{PROFILE_SERVICE_BASE}/profiles/{uid}", timeout=6)
+            profile = prof_res.json().get("profile") if prof_res.status_code == 200 else None
+        except requests.exceptions.RequestException:
+            profile = None
+
+        try:
+            skills_res = requests.get(f"{SKILLS_SERVICE_BASE}/users/{uid}/skills", timeout=6)
+            skills = skills_res.json().get("skills", []) if skills_res.status_code == 200 else []
+        except requests.exceptions.RequestException:
+            skills = []
+
+        return jsonify(
+            collaborator={
+                "user_id": uid,
+                "email": user.get("email"),
+                "profile": profile,
+                "skills": skills,
+            }
+        )
+
+    @app.get("/collaborators")
+    def list_collaborators():
+        """Lista colaboradores com informações principais: email, disponibilidade e skills.
+
+        Query params opcionais: page (1..), page_size (1..200)
+        """
+        try:
+            page = max(1, int(request.args.get("page", 1)))
+        except ValueError:
+            page = 1
+        try:
+            page_size = int(request.args.get("page_size", 50))
+        except ValueError:
+            page_size = 50
+        page_size = min(max(1, page_size), 200)
+
+        # Obter lista de usuários do auth_service
+        try:
+            users_res = requests.get(f"{AUTH_SERVICE_BASE}/users/list", timeout=10)
+            if not users_res.ok:
+                return jsonify(error="falha ao listar usuários"), 502
+            all_users = users_res.json().get("users", [])
+        except requests.exceptions.RequestException as e:
+            return jsonify(error=f"falha de conexão com auth: {str(e)}"), 502
+
+        total = len(all_users)
+        start = (page - 1) * page_size
+        end = start + page_size
+        users_slice = all_users[start:end]
+
+        collaborators: List[Dict] = []
+        for u in users_slice:
+            uid = u.get("id")
+            email = u.get("email")
+            # Perfil (para disponibilidade e nome)
+            try:
+                prof_res = requests.get(f"{PROFILE_SERVICE_BASE}/profiles/{uid}", timeout=6)
+                profile = prof_res.json().get("profile") if prof_res.status_code == 200 else None
+            except requests.exceptions.RequestException:
+                profile = None
+
+            availability = (profile or {}).get("availability") if profile else None
+            full_name = (profile or {}).get("full_name") if profile else None
+
+            # Skills
+            try:
+                skills_res = requests.get(f"{SKILLS_SERVICE_BASE}/users/{uid}/skills", timeout=6)
+                skills = skills_res.json().get("skills", []) if skills_res.status_code == 200 else []
+            except requests.exceptions.RequestException:
+                skills = []
+
+            collaborators.append(
+                {
+                    "user_id": uid,
+                    "email": email,
+                    "full_name": full_name,
+                    "availability": availability,  # 'actively-looking' | 'exploring' | None
+                    "skills": skills,  # [{skill_name, proficiency, id?}]
+                }
+            )
+
+        return jsonify(
+            page=page,
+            page_size=page_size,
+            total=total,
+            collaborators=collaborators,
+        )
+
     return app
 
 

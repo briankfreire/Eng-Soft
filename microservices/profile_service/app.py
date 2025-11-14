@@ -5,6 +5,8 @@ from typing import Dict, List
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+import os
+import requests
 import sqlite3
 
 
@@ -228,6 +230,71 @@ def create_app() -> Flask:
             links={"average_per_profile": average_links},
             generated_at=_now(),
         )
+
+    @app.post("/profiles/<int:user_id>/bio/suggest")
+    def suggest_bio(user_id: int):
+        """Gera uma bio curta com IA (GROQ) com base nas skills do usuário."""
+        api_key = os.getenv("GROQ_API") or os.getenv("GROQ_API_KEY")
+        if not api_key:
+            return jsonify(error="IA indisponível: configure a variável de ambiente GROQ_API"), 400
+
+        # Buscar skills do usuário
+        try:
+            skills_res = requests.get(
+                f"https://colaboradores-skills.azurewebsites.net/users/{user_id}/skills",
+                timeout=8,
+            )
+            skills = (skills_res.json() or {}).get("skills", []) if skills_res.ok else []
+        except requests.exceptions.RequestException:
+            skills = []
+
+        skill_lines = [
+            f"- {s.get('skill_name','')} ({s.get('proficiency','')})" for s in skills
+        ] or ["- Sem skills cadastradas"]
+        skills_text = "\n".join(skill_lines)
+
+        prompt = (
+            "Gere uma bio curta e objetiva em português (50 a 70 palavras), "
+            "focada em impacto e colaboração, com base nas competências abaixo. "
+            "Evite listas e emoji. Texto corrido.\n\n"
+            f"Competências:\n{skills_text}\n\nFormato: texto puro."
+        )
+
+        try:
+            groq_res = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "llama3-8b-8192",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "Você é um assistente que escreve bios curtas em pt-BR, com clareza e profissionalismo.",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.6,
+                    "max_tokens": 256,
+                },
+                timeout=20,
+            )
+            if not groq_res.ok:
+                return jsonify(error="Falha ao gerar bio"), 502
+            data = groq_res.json()
+            content = (
+                ((data or {}).get("choices") or [{}])[0]
+                .get("message", {})
+                .get("content", "")
+                .strip()
+            )
+            if not content:
+                return jsonify(error="Resposta vazia da IA"), 502
+            return jsonify(bio_suggestion=content)
+        except requests.exceptions.RequestException:
+            return jsonify(error="Erro de conexão com a IA"), 502
 
     return app
 

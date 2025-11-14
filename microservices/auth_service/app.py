@@ -132,6 +132,30 @@ def create_app() -> Flask:
             return jsonify(error="usuário não encontrado"), 404
         return jsonify(user=_serialize_user(row))
 
+    @app.get("/users")
+    def find_user_by_email():
+        """Busca usuário por email: /users?email=..."""
+        email = (request.args.get("email") or "").strip().lower()
+        if not email:
+            return jsonify(error="parâmetro 'email' é obrigatório"), 400
+        with get_conn() as conn:
+            row = conn.execute(
+                "SELECT id, email, created_at FROM users WHERE email = ?", (email,)
+            ).fetchone()
+        if not row:
+            return jsonify(error="usuário não encontrado"), 404
+        return jsonify(user=_serialize_user(row))
+
+    @app.get("/users/list")
+    def list_users():
+        """Lista todos os usuários (apenas id, email, created_at)."""
+        with get_conn() as conn:
+            rows = conn.execute(
+                "SELECT id, email, created_at FROM users ORDER BY id ASC"
+            ).fetchall()
+        users = [_serialize_user(r) for r in rows]
+        return jsonify(users=users)
+
     @app.get("/metrics")
     def metrics():
         with get_conn() as conn:
